@@ -1,4 +1,4 @@
-#! /usr/bin/python
+
 
 # import the necessary packages
 from imutils import paths
@@ -43,7 +43,7 @@ for (i, imagePath) in enumerate(imagePaths):
 		knownEncodings.append(encoding)
 		knownNames.append(name)
 
-# dump the facial encodings + names to disk
+
 print("[INFO] serializing encodings...")
 data = {"encodings": knownEncodings, "names": knownNames}
 f = open("encodings.pickle", "wb")

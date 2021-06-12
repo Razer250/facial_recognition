@@ -10,6 +10,12 @@ import time
 import cv2
 import requests
 
+def send_message(name):
+    return requests.post(
+        "http://localhost:3000/api/driver",
+        data={"msg":name},
+		timeout=5)
+
 #Initialize 'currentname' to trigger only when a new person is identified.
 currentname = "unknown"
 #Determine faces from encodings.pickle file model created from train_model.py

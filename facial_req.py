@@ -1,6 +1,3 @@
-#! /usr/bin/python
-
-# import the necessary packages
 from imutils.video import VideoStream
 from imutils.video import FPS
 import face_recognition
@@ -8,6 +5,16 @@ import imutils
 import pickle
 import time
 import cv2
+import requests
+import telegram
+#Initialize the telegram bot
+bot = telegram.Bot(token='1636591283:AAEqW4gjqB2-_SuqR4-ZmhTarVwrvIQSCYo')
+def send_message(name):
+    	return requests.post(
+        "http://driverauth.ddns.net:3000/api/driver",
+		files = {'file': open('image.jpg', 'rb')},
+        data={"msg":name},
+		timeout=1)
 
 #Initialize 'currentname' to trigger only when a new person is identified.
 currentname = "unknown"
@@ -25,7 +32,6 @@ detector = cv2.CascadeClassifier(cascade)
 # initialize the video stream and allow the camera sensor to warm up
 print("[INFO] starting video stream...")
 vs = VideoStream(src=0).start()
-#vs = VideoStream(usePiCamera=True).start()
 time.sleep(2.0)
 
 # start the FPS counter
@@ -70,6 +76,7 @@ while True:
 			# find the indexes of all matched faces then initialize a
 			# dictionary to count the total number of times each face
 			# was matched
+
 			matchedIdxs = [i for (i, b) in enumerate(matches) if b]
 			counts = {}
 
@@ -84,24 +91,58 @@ while True:
 			# will select first entry in the dictionary)
 			name = max(counts, key=counts.get)
 			
+			
 			#If someone in your dataset is identified, print their name on the screen
+			if currentname != name:
+				counter = 0
+				currentname = name
+				print(currentname)
+				#Take a picture to send in the web application
+				img_name = "image.jpg"
+				time.sleep(2)
+				cv2.imwrite(img_name, frame)
+				print('Taking a picture.')
+				requests.get("http://192.168.200.3:8000?submit=Allow",timeout=1)
+				#sending the notification the telegram 
+				ism=currentname+' is using the vehicle please open https://driverauth.ddns.net to access the picture '
+				bot.send_message('1623192972',ism)
+
+				try:
+					
+					request = send_message(currentname)
+				except requests.exceptions.RequestException as errt:
+					ch = 1
+		else:
 			if currentname != name:
 				currentname = name
 				print(currentname)
-		
+				#Take a picture to send in the web application
+				img_name = "image.jpg"
+				cv2.imwrite(img_name, frame)
+				print('Taking a picture.')
+				#sending the notification the telegram
+				ismunknown=currentname+' is using the vehicle please open https://driverauth.ddns.net to access allow or deny '
+				bot.send_message('1623192972',ismunknown)			
+				try:
+				
+					request = send_message(currentname)
+				except requests.exceptions.RequestException as errt:
+					ch = 1
+				
 		# update the list of names
+	
 		names.append(name)
 
 	# loop over the recognized faces
 	for ((top, right, bottom, left), name) in zip(boxes, names):
 		# draw the predicted face name on the image - color is in BGR
-		cv2.rectangle(frame, (left, top), (right, bottom),
-			(0, 255, 225), 2)
+		cv2.rectangle(frame, (left, top), (right, bottom),(0, 255, 225), 2)
 		y = top - 15 if top - 15 > 15 else top + 15
-		cv2.putText(frame, name, (left, y), cv2.FONT_HERSHEY_SIMPLEX,
-			.8, (0, 255, 255), 2)
+		cv2.putText(frame, name, (left, y), cv2.FONT_HERSHEY_SIMPLEX,.8, (0, 255, 255), 2)
+	
 
-	# display the image to our screen
+	
+	 #display the image to our screen
 	cv2.imshow("Facial Recognition is Running", frame)
 	key = cv2.waitKey(1) & 0xFF
 
